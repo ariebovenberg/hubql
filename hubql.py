@@ -45,7 +45,9 @@ _SCALARS = {
     'X509Certificate': str,
     'GitSSHRemote':    str,
 }
-_CLASSES = quiz.schema.build(quiz.schema.load(schema), _SCALARS)
+_CLASSES = quiz.schema.build(quiz.schema.load(schema),
+                             module_name=__name__,
+                             scalars=_SCALARS)
 
 
 query = partial(quiz.query, cls=_CLASSES['Query'])
