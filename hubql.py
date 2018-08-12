@@ -12,10 +12,24 @@ import quiz
 _DEFAULT_URL = "https://api.github.com/graphql"
 _SCHEMA_PATH = Path(__file__).parent / 'schema.json'
 
-# uncomment to retrieve the lastest schema
-# schema = execute(quiz.schema.get(_DEFAULT_URL))
-# with _SCHEMA_PATH.open('w') as rfile:
-#     schema = json.dump(schema, rfile)
+
+def _bearer_auth(token):
+    return snug.header_adder({'Authorization': f'bearer {token}'})
+
+
+def execute(operation, token, url=_DEFAULT_URL, **kwargs):
+    return quiz.execute(operation, url=url, auth=_bearer_auth(token), **kwargs)
+
+
+def executor(token, url=_DEFAULT_URL, **kwargs):
+    return quiz.executor(url=url, auth=_bearer_auth(token), **kwargs)
+
+
+def update_schema(token, **kwargs):
+    schema = execute(quiz.introspection_query, token=token, **kwargs)
+    with _SCHEMA_PATH.open('w') as rfile:
+        schema = json.dump(schema, rfile)
+
 
 with _SCHEMA_PATH.open('rt') as rfile:
     schema = json.load(rfile)
@@ -31,20 +45,10 @@ _SCALARS = {
     'X509Certificate': str,
     'GitSSHRemote':    str,
 }
-
-_CLASSES = quiz.types.gen(quiz.schema.load(schema), _SCALARS)
-
-
-def bearer_auth(token):
-    return snug.header_adder({'Authorization': f'bearer {token}'})
+_CLASSES = quiz.schema.build(quiz.schema.load(schema), _SCALARS)
 
 
-# TODO allow custom client set
-def executor(token, url=_DEFAULT_URL, **kwargs):
-    return quiz.executor(url=url, auth=bearer_auth(token), **kwargs)
-
-
-query = partial(quiz.query, query_cls=_CLASSES['Query'])
+query = partial(quiz.query, cls=_CLASSES['Query'])
 
 
 # Add the classes to the module

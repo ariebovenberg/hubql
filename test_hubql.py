@@ -7,7 +7,7 @@ import quiz
 
 _ = quiz.selector
 
-TOKEN = Path('~/.snug/github_token.txt').expanduser().read_text().strip()
+TOKEN = Path('~/.creds/github.txt').expanduser().read_text().strip()
 
 
 @pytest.fixture(scope='session')
