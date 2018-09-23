@@ -5,14 +5,14 @@ import pytest
 import hubql
 import quiz
 
-_ = quiz.selector
+_ = quiz.SELECTOR
 
 TOKEN = Path('~/.creds/github.txt').expanduser().read_text().strip()
 
 
 @pytest.fixture(scope='session')
 def execute():
-    return hubql.executor(TOKEN)
+    return hubql.executor(auth=TOKEN)
 
 
 def test_module():
@@ -21,7 +21,7 @@ def test_module():
 
 def test_simple(execute):
 
-    query = hubql.query(
+    query = hubql.query[
         _
         .rateLimit[
             _
@@ -41,9 +41,16 @@ def test_simple(execute):
                         _.id
                     ]
                 ]
+                ('count').totalCount
             ]
         ]
-    )
+    ]
 
     result = execute(query)
-    assert 'errors' not in result
+    assert result.organization.members.count > 200
+    assert isinstance(result.organization, hubql.Organization)
+
+
+def test_get_schema():
+    schema = quiz.Schema.from_url(hubql.URL, auth=hubql.auth_factory(TOKEN))
+    assert isinstance(schema, quiz.Schema)
